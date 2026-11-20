@@ -310,8 +310,7 @@ say "Next, the migrations in migrations/ run against the real database."
 if confirm "Apply the migrations to the eoe-symptom-tracker database on Cloudflare?"; then
   npx wrangler d1 migrations apply eoe-symptom-tracker --remote
 else
-  say "Skipped. The app won't work until this runs. Re-run the wizard to do it."
-  exit 0
+  say "Skipped. Fine if an earlier run already did it; otherwise the app can't save."
 fi
 pause
 
@@ -330,8 +329,7 @@ note "rejects every request for data. At most someone could see the empty app."
 if confirm "Deploy now?"; then
   deploy
 else
-  say "Skipped. Re-run the wizard when you're ready."
-  exit 0
+  say "Skipped. Fine if an earlier run already deployed."
 fi
 APP_URL=${APP_URL:-$(_existing APP_URL || true)}
 [[ -n "${APP_URL:-}" ]] || ask APP_URL "Paste the workers.dev address Wrangler printed:"
