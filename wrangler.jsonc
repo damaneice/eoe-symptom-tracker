@@ -25,7 +25,7 @@
     // Set by scripts/setup-cloudflare.sh, from Zero Trust. Until the AUD tag is set,
     // the Worker rejects every /api request.
     "ACCESS_TEAM_DOMAIN": "https://proud-dust-4dd0.cloudflareaccess.com",
-    "ACCESS_AUD": "replace-with-the-access-application-aud-tag",
+    "ACCESS_AUD": "97bb3ba18f87ea1a5c9873bbfaca38abd2e7b474770c7f433c90f02d41a134dd",
   },
   "observability": { "enabled": true },
 }

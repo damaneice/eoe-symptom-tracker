@@ -4,10 +4,10 @@ import { match } from "./routes";
 type WorkerEnv = Env & AuthEnv;
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    const email = await signedInEmail(request, env);
+    const email = await signedInEmail(request, env, ctx.access);
     if (!email) return Response.json({ error: "Not signed in" }, { status: 401 });
 
     if (url.pathname === "/api/health") {

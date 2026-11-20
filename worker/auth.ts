@@ -30,17 +30,34 @@ function keysFor(env: AuthEnv): JWTVerifyGetKey {
 }
 
 /**
- * Returns the signed-in caregiver's email from the Cloudflare Access token, or null when the
- * request isn't signed in. Access already blocks other people; this stops anyone reaching the
- * Worker some other way.
+ * Returns the signed-in caregiver's email, or null when the request isn't signed in.
+ *
+ * With Access turned on for the Worker itself (the Worker's Access tab), Cloudflare passes the
+ * signed-in user as `ctx.access`, which is only set when Access authenticated this request. With
+ * a hostname-level Access application, the request carries a signed token instead, checked
+ * against the team domain and AUD tag. Access already blocks other people; this stops anyone
+ * reaching the Worker some other way.
  */
-export async function signedInEmail(request: Request, env: AuthEnv): Promise<string | null> {
+export async function signedInEmail(
+  request: Request,
+  env: AuthEnv,
+  access?: CloudflareAccessContext,
+): Promise<string | null> {
+  if (access) {
+    const identity = await access.getIdentity();
+    if (identity?.email) return identity.email;
+    console.warn("Sign-in rejected: Access identity has no email", { aud: access.aud });
+    return null;
+  }
+
   const token = request.headers.get("Cf-Access-Jwt-Assertion");
 
   if (!token) {
     const host = new URL(request.url).hostname;
     if (env.DEV_USER_EMAIL && LOCAL_HOSTS.has(host)) return env.DEV_USER_EMAIL;
-    console.warn("Sign-in rejected: no Access token (is Access turned on for this Worker?)");
+    console.warn(
+      "Sign-in rejected: no ctx.access and no Access token (is Access on for this Worker?)",
+    );
     return null;
   }
 
