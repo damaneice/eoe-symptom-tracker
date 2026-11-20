@@ -18,10 +18,12 @@
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
+    "jose": "^6.2.18",
     "solid-js": "^1.9.20"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.70.1",
+    "@cloudflare/vitest-plugin": "^1.8.5",
     "@eslint/js": "^10.0.1",
     "@tailwindcss/vite": "^4.3.5",
     "@types/node": "^24.19.2",

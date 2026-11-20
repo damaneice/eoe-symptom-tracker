@@ -21,5 +21,10 @@
       "migrations_dir": "migrations",
     },
   ],
+  "vars": {
+    // From Zero Trust → Access → Applications. Placeholders until the deploy milestone.
+    "ACCESS_TEAM_DOMAIN": "https://your-team.cloudflareaccess.com",
+    "ACCESS_AUD": "replace-with-the-access-application-aud-tag",
+  },
   "observability": { "enabled": true },
 }

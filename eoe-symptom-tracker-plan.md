@@ -36,7 +36,7 @@ One Cloudflare Worker serves both the built frontend and a small JSON API. Data 
 | Deploys | GitHub Actions on every push to `main`: lint, test, apply D1 migrations, then `wrangler deploy`. No preview deploys | One workflow and one API token secret |
 | Install on phone | PWA manifest and icons, with no service worker at first | "Add to Home Screen" opens it like an app |
 | Charts | Hand-drawn SVG, as in the prototype | Only one chart is needed, so no chart library |
-| Tests | Vitest for domain logic, `@cloudflare/vitest-pool-workers` for the API against a local D1 | Scoring, week math and merging are the risky parts |
+| Tests | Vitest for domain logic, `@cloudflare/vitest-plugin` for the API against a local D1 | Scoring, week math and merging are the risky parts |
 
 ### How auth works
 - Only caregivers use the app, each with their own email on the Access allowlist. The patient does not log in.
@@ -44,7 +44,8 @@ One Cloudflare Worker serves both the built frontend and a small JSON API. Data 
 - Set the Access session length to **1 month**, so caregivers aren't typing an emailed PIN every day.
 - The Worker still verifies the `Cf-Access-Jwt-Assertion` header (team domain + AUD tag, via `jose`) on every `/api/*` request, and rejects requests without a valid token. This is defense in depth on top of turning off `workers_dev` and preview URLs in `wrangler.jsonc`.
 - The user's email from the token is saved as `updated_by` / `created_by` / `author`. There are no user, household or member tables.
-- In local dev, a `DEV_USER_EMAIL` variable stands in for the Access token.
+- In local dev, a `DEV_USER_EMAIL` variable in `.dev.vars` stands in for the Access token, but only for requests to `localhost`, so setting it by mistake in production can't skip sign-in.
+- API tests sign their own tokens with a throwaway key. An optional `ACCESS_JWKS` variable supplies the matching public key, so the Worker doesn't fetch Access's real keys. Production leaves it unset.
 
 ## Data model (D1 / SQLite)
 One patient per deployment, so there are no tenant keys. All dates are local `YYYY-MM-DD` strings chosen by the browser. The server never works out "today".

@@ -180,3 +180,17 @@ export function validateSettings(input: unknown): Result<Settings> {
     firstDose: null,
   });
 }
+
+export interface NoteInput {
+  date: string;
+  text: string;
+}
+
+const noteRules: Record<keyof NoteInput, Rule> = {
+  date: isoDate,
+  text: nonBlankText(2000),
+};
+
+export function validateNote(input: unknown): Result<NoteInput> {
+  return check(input, noteRules, ["date", "text"]);
+}
