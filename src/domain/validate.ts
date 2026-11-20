@@ -93,8 +93,6 @@ export type LogPatch = Partial<Omit<DailyLog, "date">>;
 
 const logRules: Record<keyof LogPatch, Rule> = {
   swallow: intInRange(0, 3),
-  chest: intInRange(0, 3),
-  abdo: intInRange(0, 3),
   vomit: intInRange(0, 99),
   impaction: boolean,
   eating: boolean,

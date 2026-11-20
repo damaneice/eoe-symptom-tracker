@@ -5,8 +5,6 @@ export interface DailyLog {
   date: IsoDate;
   /** 0 none, 1 slow or careful eating, 2 needed a drink to get food down, 3 food got stuck. */
   swallow: number;
-  chest: number;
-  abdo: number;
   vomit: number;
   impaction: boolean;
   eating: boolean;

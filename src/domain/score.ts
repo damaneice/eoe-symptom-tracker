@@ -3,8 +3,6 @@ import type { DailyLog } from "./types";
 export function score(log: DailyLog): number {
   return (
     log.swallow +
-    log.chest +
-    log.abdo +
     Math.min(log.vomit, 3) +
     (log.impaction ? 3 : 0) +
     (log.eating ? 1 : 0) +

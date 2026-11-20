@@ -48,8 +48,6 @@ describe("PATCH /api/logs/:date", () => {
   const empty = {
     date: "2026-11-19",
     swallow: 0,
-    chest: 0,
-    abdo: 0,
     vomit: 0,
     impaction: false,
     eating: false,

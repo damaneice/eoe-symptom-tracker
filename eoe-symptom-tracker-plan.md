@@ -51,7 +51,7 @@ One patient per deployment, so there are no tenant keys. All dates are local `YY
 ```
 settings     id = 1 (single row), patient_name, first_dose TEXT NULL (YYYY-MM-DD),
              interval_days INTEGER (7|14|28), dose_mg INTEGER
-daily_logs   date TEXT PK, swallow 0-3, chest 0-3, abdo 0-3, vomit INTEGER,
+daily_logs   date TEXT PK, swallow 0-3, vomit INTEGER,
              impaction 0/1, eating 0/1, sleep 0/1, overall 0-10 NULL,
              updated_by TEXT, updated_at TEXT
 day_notes    id INTEGER PK, date TEXT, text TEXT, author TEXT, created_at TEXT
@@ -84,15 +84,16 @@ The frontend loads `/api/state` once into a single Solid `createStore`. Every de
 
 Solid gotchas to follow: don't destructure props, use `<For>` and `<Show>` instead of `.map()` and `&&`, and remember that a component body runs only once.
 
-## Scoring (keep identical to the prototype)
-- Symptom score from 0 to 17, where lower is better. It is the sum of:
-  - swallow (0–3), chest (0–3) and abdo (0–3),
+## Scoring (the prototype's, without chest and stomach pain)
+- Symptom score from 0 to 11, where lower is better. It is the sum of:
+  - swallow (0–3),
   - vomiting count, capped at 3,
   - 3 points for a food impaction,
   - 1 point for eating trouble,
   - 1 point for disrupted sleep.
 - Swallowing scale: 0 none, 1 slow or careful eating, 2 needed a drink to get food down, 3 food got stuck.
 - Overall day rating (0–10) is stored separately and is not part of the score.
+- Chest pain and stomach pain aren't tracked: the patient is too young to describe them reliably. Everything in the score is something a caregiver can see.
 
 ## Derived metrics (pure functions, unit tested)
 These live in `src/domain/`.

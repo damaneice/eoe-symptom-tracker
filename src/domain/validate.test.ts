@@ -14,10 +14,17 @@ describe("validateLogPatch", () => {
   });
 
   it("rejects ratings outside their range, naming the field", () => {
-    const result = validateLogPatch({ swallow: 7, overall: 11, vomit: -1, chest: 1.5 });
+    const result = validateLogPatch({ swallow: 1.5, overall: 11, vomit: -1 });
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(Object.keys(result.errors).sort()).toEqual(["chest", "overall", "swallow", "vomit"]);
+    expect(Object.keys(result.errors).sort()).toEqual(["overall", "swallow", "vomit"]);
+  });
+
+  it("rejects the removed chest and stomach pain fields", () => {
+    expect(validateLogPatch({ chest: 1, abdo: 2 })).toMatchObject({
+      ok: false,
+      errors: { chest: "Unknown field", abdo: "Unknown field" },
+    });
   });
 
   it("rejects wrong types for the trouble flags", () => {

@@ -32,8 +32,6 @@ type Fields = Omit<Day, "date">;
 
 const BLANK: Fields = {
   swallow: 0,
-  chest: 0,
-  abdo: 0,
   vomit: 0,
   impaction: false,
   eating: false,
@@ -145,22 +143,6 @@ export function DailyLog() {
               stuck
             </Hint>
           </Question>
-          <Question title="Chest pain or heartburn">
-            <Segmented
-              label="Chest pain or heartburn"
-              options={SEVERITY}
-              value={form.chest}
-              onChange={(v) => setForm("chest", v ?? 0)}
-            />
-          </Question>
-          <Question title="Stomach pain">
-            <Segmented
-              label="Stomach pain"
-              options={SEVERITY}
-              value={form.abdo}
-              onChange={(v) => setForm("abdo", v ?? 0)}
-            />
-          </Question>
           <Question title="Vomiting or food coming back up" aside="times today">
             <Stepper
               label="Times vomited"
@@ -201,7 +183,7 @@ export function DailyLog() {
 
           <div class="flex items-center justify-between gap-3 rounded-[10px] bg-accent-soft p-3">
             <span>
-              Symptom score <Hint>(0–17, lower is better)</Hint>
+              Symptom score <Hint>(0–11, lower is better)</Hint>
             </span>
             <b class="font-display text-2xl font-bold tabular-nums">
               {score({ date: date(), ...form })}

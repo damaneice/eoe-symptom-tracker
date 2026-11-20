@@ -36,8 +36,6 @@ export async function putSettings(db: D1Database, s: Settings): Promise<void> {
 interface LogRow {
   date: string;
   swallow: number;
-  chest: number;
-  abdo: number;
   vomit: number;
   impaction: number;
   eating: number;
@@ -50,8 +48,6 @@ interface LogRow {
 const toLog = (row: LogRow): StoredLog => ({
   date: row.date,
   swallow: row.swallow,
-  chest: row.chest,
-  abdo: row.abdo,
   vomit: row.vomit,
   impaction: row.impaction === 1,
   eating: row.eating === 1,
@@ -64,8 +60,6 @@ const toLog = (row: LogRow): StoredLog => ({
 /** Column for each patchable field. Only these names ever reach the SQL. */
 const LOG_COLUMNS: Record<keyof LogPatch, string> = {
   swallow: "swallow",
-  chest: "chest",
-  abdo: "abdo",
   vomit: "vomit",
   impaction: "impaction",
   eating: "eating",
