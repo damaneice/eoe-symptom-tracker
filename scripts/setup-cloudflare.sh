@@ -184,15 +184,17 @@ finish() {
 # Replace the example below. Set TOTAL_STAGES to match the stages you write.
 # ──────────────────────────────────────────────────────────────────────────
 #
-# Sets up Cloudflare for the EoE tracker and does the first deploy:
-# sign in, database, address, Access (sign-in gate), first deploy, then the
-# GitHub secrets that let CI deploy every push to main.
+# Sets up Cloudflare for the EoE tracker and does the first deploy, on the
+# Worker's free *.workers.dev address with Cloudflare Access in front of it:
+# sign in, database, Zero Trust, first deploy, turn on Access, deploy again
+# with the Access AUD tag, then the GitHub secrets for CI deploys.
 #
 # Run from anywhere:  bash scripts/setup-cloudflare.sh
 # Re-running is safe: it remembers answers in .cloudflare.env (not committed).
 
 cd "$(dirname "$0")/.."
 ENV_FILE=".cloudflare.env"
+WORKER_NAME="eoe-symptom-tracker"
 REPO_SECRETS_URL="https://github.com/damaneice/eoe-symptom-tracker/settings/secrets/actions"
 
 # Use the project's Node version if nvm is installed.
@@ -212,14 +214,26 @@ require_value() {
 # update_wrangler_config: writes the captured values into wrangler.jsonc, then
 # regenerates the Worker types (CI checks they match the config).
 update_wrangler_config() {
-  APP_HOSTNAME="$APP_HOSTNAME" DATABASE_ID="$DATABASE_ID" \
-    ACCESS_TEAM_DOMAIN="$ACCESS_TEAM_DOMAIN" ACCESS_AUD="$ACCESS_AUD" \
-    node scripts/write-wrangler-config.mjs wrangler.jsonc
+  DATABASE_ID="$DATABASE_ID" ACCESS_TEAM_DOMAIN="$ACCESS_TEAM_DOMAIN" \
+    ACCESS_AUD="${ACCESS_AUD:-}" node scripts/write-wrangler-config.mjs wrangler.jsonc
   npx wrangler types >/dev/null
   printf '  %s✓ updated%s wrangler.jsonc and worker-configuration.d.ts\n' "$GREEN" "$RESET"
 }
 
-TOTAL_STAGES=11
+# deploy: builds and deploys, and remembers the workers.dev address it prints.
+deploy() {
+  local log url
+  log=$(mktemp)
+  npm run deploy 2>&1 | tee "$log"
+  url=$(grep -oE "https://[a-z0-9.-]+\.workers\.dev" "$log" | head -n1 || true)
+  rm -f "$log"
+  if [[ -n "$url" ]]; then
+    APP_URL="$url"
+    write_env APP_URL "$APP_URL"
+  fi
+}
+
+TOTAL_STAGES=10
 
 banner "EoE tracker · Cloudflare setup and first deploy"
 
@@ -240,19 +254,6 @@ require_value CLOUDFLARE_ACCOUNT_ID
 write_env CLOUDFLARE_ACCOUNT_ID "$CLOUDFLARE_ACCOUNT_ID"
 
 # ── 2 ─────────────────────────────────────────────────────────────────────
-stage "Choose the app's address"
-say "The app lives on a subdomain of a domain that's already on your Cloudflare"
-say "account, for example eoe.yourdomain.com."
-open_url "https://dash.cloudflare.com/"
-step "Check which domains are listed on your account home page."
-step "Pick a subdomain nobody uses yet. It must not already have a CNAME record."
-ask APP_HOSTNAME "Type the full address (like eoe.yourdomain.com):"
-APP_HOSTNAME="${APP_HOSTNAME#https://}"
-APP_HOSTNAME="${APP_HOSTNAME%%/*}"
-require_value APP_HOSTNAME
-write_env APP_HOSTNAME "$APP_HOSTNAME"
-
-# ── 3 ─────────────────────────────────────────────────────────────────────
 stage "Create the database"
 DATABASE_ID=$(_existing DATABASE_ID || true)
 if [[ -n "$DATABASE_ID" ]]; then
@@ -273,7 +274,7 @@ fi
 require_value DATABASE_ID
 write_env DATABASE_ID "$DATABASE_ID"
 
-# ── 4 ─────────────────────────────────────────────────────────────────────
+# ── 3 ─────────────────────────────────────────────────────────────────────
 stage "Start Zero Trust (Cloudflare Access)"
 say "Access is the sign-in gate in front of the app. It's free for up to 50 users."
 open_url "https://one.dash.cloudflare.com/"
@@ -288,7 +289,7 @@ require_value ACCESS_TEAM_NAME
 write_env ACCESS_TEAM_NAME "$ACCESS_TEAM_NAME"
 ACCESS_TEAM_DOMAIN="https://${ACCESS_TEAM_NAME}.cloudflareaccess.com"
 
-# ── 5 ─────────────────────────────────────────────────────────────────────
+# ── 4 ─────────────────────────────────────────────────────────────────────
 stage "Turn on sign-in with an emailed code"
 say "New Zero Trust accounts don't have the emailed one-time PIN turned on."
 step "In Zero Trust, go to Integrations → Identity providers."
@@ -297,44 +298,15 @@ step "Select One-time PIN and save it."
 note "If One-time PIN is already listed there, skip this."
 pause "Press Enter when One-time PIN is on"
 
-# ── 6 ─────────────────────────────────────────────────────────────────────
-stage "Put the sign-in gate in front of $APP_HOSTNAME"
-step "Go to Access controls → Applications → Create new application."
-step "Select Self-hosted and private, then Add public hostname."
-step "Enter the subdomain and pick the domain so it reads: $APP_HOSTNAME"
-step "Name it: EoE tracker"
-step "Session Duration: 1 month (or the longest offered), so nobody signs in daily."
-step "Under Access policies, create a policy named Caregivers with action Allow,"
-say "    and an Include rule for Emails listing each caregiver's email address."
-step "Under login methods, make sure One-time PIN is selected."
-step "Select Create."
-note "If a screen looks different, the goal is the same: only the listed emails can"
-note "reach $APP_HOSTNAME, signing in with an emailed code, for a month at a time."
-pause "Press Enter when the application is created"
-
-# ── 7 ─────────────────────────────────────────────────────────────────────
-stage "Copy the application's AUD tag"
-say "The Worker checks every request carries a token made for this application."
-step "In Access controls → Applications, select Edit on EoE tracker."
-step "Open Additional settings and copy the Application Audience (AUD) Tag."
-ask ACCESS_AUD "Paste the AUD tag:"
-require_value ACCESS_AUD
-write_env ACCESS_AUD "$ACCESS_AUD"
-
-# ── 8 ─────────────────────────────────────────────────────────────────────
-stage "Save the settings in wrangler.jsonc"
-say "These values aren't secret, so they're stored in the repo's config:"
-note "  address        $APP_HOSTNAME"
+# ── 5 ─────────────────────────────────────────────────────────────────────
+stage "Create the tables in the database"
+say "Saving the database ID and Access team into wrangler.jsonc (not secret):"
 note "  database ID    $DATABASE_ID"
 note "  Access team    $ACCESS_TEAM_DOMAIN"
-note "  AUD tag        $ACCESS_AUD"
+ACCESS_AUD=$(_existing ACCESS_AUD || true)
 update_wrangler_config
-git --no-pager diff --stat -- wrangler.jsonc worker-configuration.d.ts || true
-pause
-
-# ── 9 ─────────────────────────────────────────────────────────────────────
-stage "Create the tables in the database"
-say "This runs the migrations in migrations/ against the real database."
+say ""
+say "Next, the migrations in migrations/ run against the real database."
 if confirm "Apply the migrations to the eoe-symptom-tracker database on Cloudflare?"; then
   npx wrangler d1 migrations apply eoe-symptom-tracker --remote
 else
@@ -343,32 +315,80 @@ else
 fi
 pause
 
-# ── 10 ────────────────────────────────────────────────────────────────────
+# ── 6 ─────────────────────────────────────────────────────────────────────
 stage "First deploy"
-say "This builds the app and puts it live at https://$APP_HOSTNAME."
-say "Cloudflare creates the DNS record and certificate the first time."
+say "Your account needs a workers.dev subdomain first; it becomes part of the address."
+open_url "https://dash.cloudflare.com/?to=/:account/workers-and-pages"
+step "If Workers & Pages asks you to choose a workers.dev subdomain, pick one."
+note "Already have one? It's under Workers & Pages → Account Details → Subdomain."
+pause "Press Enter when your account has a workers.dev subdomain"
+say ""
+say "This puts the Worker on its free workers.dev address. Access can only be"
+say "turned on once the Worker exists, so it goes live before the sign-in gate."
+note "That's safe: until the AUD tag is saved (two stages from now), the Worker"
+note "rejects every request for data. At most someone could see the empty app."
 if confirm "Deploy now?"; then
-  npm run deploy
+  deploy
 else
-  say "Skipped. Run npm run deploy when you're ready."
+  say "Skipped. Re-run the wizard when you're ready."
   exit 0
+fi
+APP_URL=${APP_URL:-$(_existing APP_URL || true)}
+[[ -n "${APP_URL:-}" ]] || ask APP_URL "Paste the workers.dev address Wrangler printed:"
+require_value APP_URL
+pause
+
+# ── 7 ─────────────────────────────────────────────────────────────────────
+stage "Put the sign-in gate in front of the Worker"
+open_url "https://dash.cloudflare.com/?to=/:account/workers-and-pages"
+step "In Workers & Pages, select $WORKER_NAME, then its Access tab."
+step "Select Protect this Worker behind Access, choose All traffic."
+step "For the policy, pick Cloudflare account for now, then Apply Access."
+say ""
+say "Then tighten it to your caregivers:"
+open_url "https://one.dash.cloudflare.com/"
+step "In Zero Trust, go to Access controls → Applications and Edit the new"
+say "    application for $WORKER_NAME."
+step "Policies: allow only Emails, listing each caregiver's email address."
+step "Login methods: make sure One-time PIN is selected."
+step "Session Duration: 1 month (or the longest offered), then save."
+note "If a screen looks different, the goal is the same: only the listed emails can"
+note "reach $APP_URL, signing in with an emailed code, for a month at a time."
+pause "Press Enter when the application is saved"
+
+# ── 8 ─────────────────────────────────────────────────────────────────────
+stage "Copy the AUD tag and deploy again"
+say "The Worker checks every request carries a token made for this application."
+step "In the same application in Zero Trust, open Additional settings (or Overview)"
+say "    and copy the Application Audience (AUD) Tag."
+ask ACCESS_AUD "Paste the AUD tag:"
+require_value ACCESS_AUD
+write_env ACCESS_AUD "$ACCESS_AUD"
+update_wrangler_config
+if confirm "Deploy again with the AUD tag?"; then
+  deploy
+else
+  say "Skipped. Run npm run deploy before using the app: until then it can't save."
 fi
 pause "Press Enter to try it in the browser"
 
-# ── 11 ────────────────────────────────────────────────────────────────────
-stage "Try it, then let GitHub deploy from now on"
-open_url "https://$APP_HOSTNAME"
+# ── 9 ─────────────────────────────────────────────────────────────────────
+stage "Try it"
+open_url "$APP_URL"
 step "Cloudflare's sign-in page appears. Enter your email; a code arrives by email."
 step "Enter the code. The app opens on Setup."
-note "A new certificate can take a few minutes. If the page errors, wait and reload."
-note "An email not on the Caregivers list gets no code, which is correct."
+note "An email that isn't on the list gets no code, which is correct."
+note "If the app says you've been signed out, the AUD tag doesn't match: re-run"
+note "the wizard and paste it again."
 pause "Press Enter once you've signed in"
-say ""
-say "Now an API token, so GitHub Actions can deploy each push to main."
+
+# ── 10 ────────────────────────────────────────────────────────────────────
+stage "Let GitHub deploy from now on"
+say "An API token lets GitHub Actions deploy each push to main."
 open_url "https://dash.cloudflare.com/profile/api-tokens"
 step "Select Create Token, and use the Edit Cloudflare Workers template."
 step "Add one more permission: Account · D1 · Edit (CI applies migrations)."
-step "Account Resources: your account. Zone Resources: the zone for $APP_HOSTNAME."
+step "Account Resources: your account. If it asks for Zone Resources, All zones is fine."
 step "Continue to summary → Create Token, then copy it. It's only shown once."
 ask_secret CLOUDFLARE_API_TOKEN "Paste the API token (hidden):"
 require_value CLOUDFLARE_API_TOKEN
@@ -384,6 +404,8 @@ if (( ${#WRITTEN_SECRET[@]} < 2 )); then
 fi
 
 finish
+say "The app is at $APP_URL"
+say ""
 say "Last step: commit the config and merge it to main, so CI deploys it from now on:"
 note "  git add wrangler.jsonc worker-configuration.d.ts"
 note "  git commit -m \"Configure Cloudflare deploy\""

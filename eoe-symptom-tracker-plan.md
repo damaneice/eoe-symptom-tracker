@@ -31,7 +31,7 @@ One Cloudflare Worker serves both the built frontend and a small JSON API. Data 
 | Database | Cloudflare D1 (SQLite), with migrations via `wrangler d1 migrations` | Free tier, syncs across devices, no server to run |
 | Auth | Cloudflare Access (Zero Trust free plan) with email one-time PIN, plus an allowlist of 2–3 caregiver emails | No login code in the app. Adding a caregiver means adding an email to the Access policy |
 | Build + dev | `@cloudflare/vite-plugin`, so `npm run dev` runs the frontend, the Worker and a local D1 together | One command, one deploy |
-| Hosting | A subdomain of a domain on the Cloudflare account, behind Access. `workers.dev` and preview URLs are turned off | HTTPS URL that opens from anywhere |
+| Hosting | The Worker's free `*.workers.dev` address, with Cloudflare Access turned on for the Worker. Preview URLs are turned off | HTTPS URL that opens from anywhere, with no domain to buy |
 | Deploys | GitHub Actions on every push to `main`: lint, test, apply D1 migrations, then `wrangler deploy`. No preview deploys | One workflow and one API token secret |
 | Install on phone | PWA manifest and icons, with no service worker at first | "Add to Home Screen" opens it like an app |
 | Charts | Hand-drawn SVG, as in the prototype | Only one chart is needed, so no chart library |
@@ -39,9 +39,9 @@ One Cloudflare Worker serves both the built frontend and a small JSON API. Data 
 
 ### How auth works
 - Only caregivers use the app, each with their own email on the Access allowlist. The patient does not log in.
-- Access sits in front of the whole hostname. Anyone not on the allowlist never reaches the Worker.
+- Access is turned on for the Worker itself (Workers & Pages → the Worker → Access tab → All traffic), then its policy is edited in Zero Trust to allow only the caregivers' emails. Anyone not on the allowlist never reaches the Worker. A custom domain can be added later without changing the app.
 - Set the Access session length to **1 month**, so caregivers aren't typing an emailed PIN every day.
-- The Worker still verifies the `Cf-Access-Jwt-Assertion` header (team domain + AUD tag, via `jose`) on every `/api/*` request, and rejects requests without a valid token. This is defense in depth on top of turning off `workers_dev` and preview URLs in `wrangler.jsonc`.
+- The Worker still verifies the `Cf-Access-Jwt-Assertion` header (team domain + AUD tag, via `jose`) on every `/api/*` request, and rejects requests without a valid token. This is defense in depth on top of Access, and it's why the first deploy is safe before Access is on: until the AUD tag is set, every `/api` request is rejected. Preview URLs are off in `wrangler.jsonc`.
 - The user's email from the token is saved as `updated_by` / `created_by` / `author`. There are no user, household or member tables.
 - In local dev, a `DEV_USER_EMAIL` variable in `.dev.vars` stands in for the Access token, but only for requests to `localhost`, so setting it by mistake in production can't skip sign-in.
 - API tests sign their own tokens with a throwaway key. An optional `ACCESS_JWKS` variable supplies the matching public key, so the Worker doesn't fetch Access's real keys. Production leaves it unset.
@@ -138,14 +138,14 @@ These live in `src/domain/`.
 - **Tooling:** `prettier-plugin-tailwindcss` to keep class order consistent.
 
 ## Milestones
-1. **Scaffold:** Vite + SolidJS + TS with `vite-plugin-solid`, `@tailwindcss/vite` and `@cloudflare/vite-plugin`, `wrangler.jsonc` with a D1 binding and `workers_dev: false`, ESLint, Prettier, Vitest, `.nvmrc`, and GitHub Actions running lint and tests.
+1. **Scaffold:** Vite + SolidJS + TS with `vite-plugin-solid`, `@tailwindcss/vite` and `@cloudflare/vite-plugin`, `wrangler.jsonc` with a D1 binding, ESLint, Prettier, Vitest, `.nvmrc`, and GitHub Actions running lint and tests.
 2. **Domain logic:** `src/domain/` with the score, week, baseline (with its label), weekly-stats, next-dose and gap, site-rotation, biopsy-label and validation functions, fully unit-tested. Write the tests first.
 3. **D1 + API:** the first migration, the Worker routes including the field-merging `PATCH`, Access JWT verification, and API tests against a local D1.
 4. **Screens:** set up the Tailwind theme tokens and shared controls first, then the first-use Setup redirect, then port the prototype's views as Solid components with the responsive layout above. Add day notes.
 5. **Summary page:** the date range, print stylesheet and layout.
 6. **Deploy:** `scripts/setup-cloudflare.sh` walks through all of it.
-   - Create the D1 database and the Access application, with the email allowlist and a 1-month session.
-   - Point a subdomain at the Worker.
+   - Create the D1 database, apply the migrations and deploy to `workers.dev`.
+   - Turn on Access for the Worker, restrict it to the caregivers' emails with the emailed one-time PIN and a 1-month session, then deploy again with the AUD tag.
    - Add the GitHub Actions deploy job: apply migrations, then `wrangler deploy` on push to `main`, with the Cloudflare API token in secrets.
 7. **PWA:** manifest and icons. Add an offline service worker only if it turns out to be needed.
 8. **After version 1:** a dose-day reminder email, sent by a daily Cron Trigger through Cloudflare Email Routing to the verified caregiver addresses. It needs a timezone setting.

@@ -1,15 +1,11 @@
 // Writes the deploy values captured by setup-cloudflare.sh into wrangler.jsonc.
-// Usage: APP_HOSTNAME=… DATABASE_ID=… ACCESS_TEAM_DOMAIN=… ACCESS_AUD=… node scripts/write-wrangler-config.mjs wrangler.jsonc
+// Usage: DATABASE_ID=… ACCESS_TEAM_DOMAIN=… [ACCESS_AUD=…] node scripts/write-wrangler-config.mjs wrangler.jsonc
+// ACCESS_AUD is optional: it only exists once Access is turned on, after the first deploy.
 import { readFileSync, writeFileSync } from "node:fs";
 
 const path = process.argv[2] ?? "wrangler.jsonc";
-const { APP_HOSTNAME, DATABASE_ID, ACCESS_TEAM_DOMAIN, ACCESS_AUD } = process.env;
-for (const [name, value] of Object.entries({
-  APP_HOSTNAME,
-  DATABASE_ID,
-  ACCESS_TEAM_DOMAIN,
-  ACCESS_AUD,
-})) {
+const { DATABASE_ID, ACCESS_TEAM_DOMAIN, ACCESS_AUD } = process.env;
+for (const [name, value] of Object.entries({ DATABASE_ID, ACCESS_TEAM_DOMAIN })) {
   if (!value) throw new Error(`${name} is required`);
 }
 
@@ -24,15 +20,6 @@ function setString(key, value) {
 
 setString("database_id", DATABASE_ID);
 setString("ACCESS_TEAM_DOMAIN", ACCESS_TEAM_DOMAIN);
-setString("ACCESS_AUD", ACCESS_AUD);
-
-if (/"routes":/.test(config)) {
-  setString("pattern", APP_HOSTNAME);
-} else {
-  config = config.replace(
-    /(\n\s*)"assets":/,
-    `$1// The app's address. Cloudflare creates its DNS record and certificate.$1"routes": [{ "pattern": ${JSON.stringify(APP_HOSTNAME)}, "custom_domain": true }],$1"assets":`,
-  );
-}
+if (ACCESS_AUD) setString("ACCESS_AUD", ACCESS_AUD);
 
 writeFileSync(path, config);

@@ -3,9 +3,10 @@
   "name": "eoe-symptom-tracker",
   "main": "worker/index.ts",
   "compatibility_date": "2026-11-01",
-  // Cloudflare Access is the front door. Turn off the public *.workers.dev URL
-  // and per-version preview URLs so nothing bypasses it.
-  "workers_dev": false,
+  // The app lives at its free *.workers.dev address, with Cloudflare Access
+  // turned on for the Worker (Workers & Pages → the Worker → Access tab), so
+  // only the allowed caregivers get through. Per-version preview URLs are off.
+  "workers_dev": true,
   "preview_urls": false,
   "assets": {
     "not_found_handling": "single-page-application",
@@ -15,14 +16,14 @@
     {
       "binding": "DB",
       "database_name": "eoe-symptom-tracker",
-      // Replace with the real id from `wrangler d1 create` at the deploy milestone.
-      // Local dev uses a local SQLite file and ignores it.
+      // Set by scripts/setup-cloudflare.sh. Local dev uses a local SQLite file and ignores it.
       "database_id": "00000000-0000-0000-0000-000000000000",
       "migrations_dir": "migrations",
     },
   ],
   "vars": {
-    // From Zero Trust → Access → Applications. Placeholders until the deploy milestone.
+    // Set by scripts/setup-cloudflare.sh, from Zero Trust. Until the AUD tag is set,
+    // the Worker rejects every /api request.
     "ACCESS_TEAM_DOMAIN": "https://your-team.cloudflareaccess.com",
     "ACCESS_AUD": "replace-with-the-access-application-aud-tag",
   },

@@ -42,10 +42,11 @@ The first deploy is a one-time setup on your Cloudflare account. Run the wizard 
 bash scripts/setup-cloudflare.sh
 ```
 
-It signs Wrangler in, creates the D1 database, sets up Cloudflare Access (the sign-in gate)
-for the app's address, writes the non-secret values into `wrangler.jsonc`, applies the
-migrations, deploys, and adds the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets to
-GitHub. Commit the updated `wrangler.jsonc` and `worker-configuration.d.ts` afterwards.
+It signs Wrangler in, creates the D1 database, applies the migrations, deploys to the
+Worker's free `workers.dev` address, walks through turning on Cloudflare Access (the sign-in
+gate) for the Worker, deploys again with the Access AUD tag, and adds the
+`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets to GitHub. The non-secret values are
+written into `wrangler.jsonc`. Commit the updated `wrangler.jsonc` and `worker-configuration.d.ts` afterwards.
 
 After that, every push to `main` deploys: CI applies any new migrations, then deploys the
 Worker. Caregivers are added or removed in the Access policy, not in the app.
