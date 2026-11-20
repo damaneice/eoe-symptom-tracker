@@ -1,6 +1,4 @@
 import type {
-  DailyLog,
-  Dose,
   EventType,
   IsoDate,
   Scope,
@@ -10,6 +8,13 @@ import type {
   TrackerEvent,
 } from "../src/domain/types";
 import type { DoseInput, LogPatch, NoteInput } from "../src/domain/validate";
+import type {
+  StoredDose,
+  StoredEvent,
+  StoredLog,
+  StoredNote,
+  StoredScope,
+} from "../src/domain/api";
 
 interface SettingsRow {
   patient_name: string;
@@ -40,11 +45,6 @@ export async function putSettings(db: D1Database, s: Settings): Promise<void> {
     )
     .bind(s.patientName, s.firstDose, s.intervalDays, s.doseMg)
     .run();
-}
-
-export interface StoredLog extends DailyLog {
-  updatedBy: string;
-  updatedAt: string;
 }
 
 interface LogRow {
@@ -137,12 +137,6 @@ export async function deleteById(db: D1Database, table: IdTable, id: number): Pr
   return meta.changes > 0;
 }
 
-export interface StoredNote extends NoteInput {
-  id: number;
-  author: string;
-  createdAt: string;
-}
-
 interface NoteRow {
   id: number;
   date: string;
@@ -174,11 +168,6 @@ export async function addNote(db: D1Database, note: NoteInput, email: string): P
     .bind(note.date, note.text, email, new Date().toISOString())
     .first<NoteRow>();
   return toNote(row!);
-}
-
-export interface StoredDose extends Dose {
-  id: number;
-  createdBy: string;
 }
 
 interface DoseRow {
@@ -224,10 +213,6 @@ export async function addDose(
   return toDose(row!);
 }
 
-export interface StoredScope extends Scope {
-  id: number;
-}
-
 interface ScopeRow {
   id: number;
   date: string;
@@ -262,11 +247,6 @@ export async function addScope(db: D1Database, s: Scope): Promise<StoredScope> {
     .bind(s.date, s.peakEosHpf, s.proximalEosHpf, s.midEosHpf, s.distalEosHpf, s.findings)
     .first<ScopeRow>();
   return toScope(row!);
-}
-
-export interface StoredEvent extends TrackerEvent {
-  id: number;
-  createdBy: string;
 }
 
 interface EventRow {

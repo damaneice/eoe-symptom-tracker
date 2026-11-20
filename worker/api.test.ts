@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { StoredEvent, StoredScope } from "./db";
-import type { ApiState } from "./routes";
+import type { ApiState, StoredEvent, StoredScope } from "../src/domain/api";
 import { accessToken, api, CAREGIVER } from "./test/client";
 
 const settings = { patientName: "Ava", firstDose: "2026-11-05", intervalDays: 14, doseMg: 300 };

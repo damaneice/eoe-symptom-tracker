@@ -257,3 +257,17 @@ describe("progress: best week and halved from baseline", () => {
     expect(early.bestWeek).toBe(1);
   });
 });
+
+describe("progress: last 7 days average", () => {
+  it("averages the scores logged in the 7 days ending today, even without a baseline", () => {
+    const result = progress(
+      state({ logs: [log("2026-11-12", 9), log("2026-11-13", 2), log("2026-11-19", 4)] }),
+      "2026-11-19",
+    );
+    expect(result.last7Average).toBe(3);
+  });
+
+  it("is empty with nothing logged in the last 7 days", () => {
+    expect(progress(state({ logs: [log("2026-11-01", 2)] }), "2026-11-19").last7Average).toBeNull();
+  });
+});

@@ -24,23 +24,8 @@ import {
   patchLog,
   putSettings,
   type IdTable,
-  type StoredDose,
-  type StoredEvent,
-  type StoredLog,
-  type StoredNote,
-  type StoredScope,
 } from "./db";
-import type { Settings } from "../src/domain/types";
-
-/** What `GET /api/state` returns: everything the app needs, loaded at once. */
-export interface ApiState {
-  settings: Settings | null;
-  logs: StoredLog[];
-  notes: StoredNote[];
-  doses: StoredDose[];
-  scopes: StoredScope[];
-  events: StoredEvent[];
-}
+import type { ApiState } from "../src/domain/api";
 
 export interface Context {
   db: D1Database;
