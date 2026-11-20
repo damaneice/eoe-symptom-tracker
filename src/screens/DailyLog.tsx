@@ -164,8 +164,8 @@ export function DailyLog() {
             onChange={(v) => setForm("eating", v)}
           />
           <Toggle
-            title="Sleep disrupted"
-            hint="Woke from reflux, pain or coughing"
+            title="Coughing at night"
+            hint="Woke up coughing, or coughed in her sleep"
             checked={form.sleep}
             onChange={(v) => setForm("sleep", v)}
           />
@@ -313,7 +313,7 @@ function RecentDays(props: { onEdit: (date: IsoDate) => void }) {
                 [
                   day.impaction && "impaction",
                   day.vomit > 0 && `vomited ×${day.vomit}`,
-                  day.sleep && "poor sleep",
+                  day.sleep && "night cough",
                   day.eating && "eating trouble",
                 ]
                   .filter(Boolean)

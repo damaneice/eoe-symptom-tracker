@@ -8,6 +8,7 @@ export interface DailyLog {
   vomit: number;
   impaction: boolean;
   eating: boolean;
+  /** Coughing at night: woke up coughing, or coughed in her sleep. */
   sleep: boolean;
   /** Overall day rating 0–10. Not part of the score. */
   overall: number | null;

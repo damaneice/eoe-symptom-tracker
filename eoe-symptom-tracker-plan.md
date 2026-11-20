@@ -90,10 +90,10 @@ Solid gotchas to follow: don't destructure props, use `<For>` and `<Show>` inste
   - vomiting count, capped at 3,
   - 3 points for a food impaction,
   - 1 point for eating trouble,
-  - 1 point for disrupted sleep.
+  - 1 point for coughing at night (woke up coughing, or coughed in her sleep). It's stored as `sleep`.
 - Swallowing scale: 0 none, 1 slow or careful eating, 2 needed a drink to get food down, 3 food got stuck.
 - Overall day rating (0–10) is stored separately and is not part of the score.
-- Chest pain and stomach pain aren't tracked: the patient is too young to describe them reliably. Everything in the score is something a caregiver can see.
+- Chest pain, stomach pain and reflux aren't tracked: the patient is too young to describe them reliably. Everything in the score is something a caregiver can see.
 
 ## Derived metrics (pure functions, unit tested)
 These live in `src/domain/`.
