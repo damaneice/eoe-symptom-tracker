@@ -17,14 +17,14 @@
       "binding": "DB",
       "database_name": "eoe-symptom-tracker",
       // Set by scripts/setup-cloudflare.sh. Local dev uses a local SQLite file and ignores it.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "b18138aa-d9cf-45af-b6f1-3a89e882bcc2",
       "migrations_dir": "migrations",
     },
   ],
   "vars": {
     // Set by scripts/setup-cloudflare.sh, from Zero Trust. Until the AUD tag is set,
     // the Worker rejects every /api request.
-    "ACCESS_TEAM_DOMAIN": "https://your-team.cloudflareaccess.com",
+    "ACCESS_TEAM_DOMAIN": "https://proud-dust-4dd0.cloudflareaccess.com",
     "ACCESS_AUD": "replace-with-the-access-application-aud-tag",
   },
   "observability": { "enabled": true },

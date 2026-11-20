@@ -1,4 +1,10 @@
-import { createLocalJWKSet, createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from "jose";
+import {
+  createLocalJWKSet,
+  createRemoteJWKSet,
+  decodeJwt,
+  jwtVerify,
+  type JWTVerifyGetKey,
+} from "jose";
 
 /** Settings that aren't in wrangler.jsonc: both are only ever set locally or in tests. */
 export interface AuthEnv {
@@ -33,7 +39,9 @@ export async function signedInEmail(request: Request, env: AuthEnv): Promise<str
 
   if (!token) {
     const host = new URL(request.url).hostname;
-    return env.DEV_USER_EMAIL && LOCAL_HOSTS.has(host) ? env.DEV_USER_EMAIL : null;
+    if (env.DEV_USER_EMAIL && LOCAL_HOSTS.has(host)) return env.DEV_USER_EMAIL;
+    console.warn("Sign-in rejected: no Access token (is Access turned on for this Worker?)");
+    return null;
   }
 
   try {
@@ -42,7 +50,24 @@ export async function signedInEmail(request: Request, env: AuthEnv): Promise<str
       audience: env.ACCESS_AUD,
     });
     return typeof payload.email === "string" ? payload.email : null;
-  } catch {
+  } catch (error) {
+    console.warn("Sign-in rejected:", describeRejection(token, error));
     return null;
+  }
+}
+
+/**
+ * Why a token was rejected, for the logs. Includes the token's issuer and audience, which
+ * identify the Access team and application (they're not secret), so a wrong ACCESS_AUD or
+ * ACCESS_TEAM_DOMAIN can be fixed from the logs. Never logs the token or the email.
+ */
+function describeRejection(token: string, error: unknown): Record<string, unknown> {
+  const reason =
+    error instanceof Error ? ((error as { code?: string }).code ?? error.message) : "unknown";
+  try {
+    const { iss, aud } = decodeJwt(token);
+    return { reason, tokenIssuer: iss, tokenAudience: aud };
+  } catch {
+    return { reason: "malformed token" };
   }
 }
