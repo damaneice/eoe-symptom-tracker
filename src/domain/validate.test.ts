@@ -120,10 +120,13 @@ describe("validateSettings", () => {
     });
   });
 
-  it("only allows a weekly or every-2-weeks schedule", () => {
+  it("allows a weekly, every-2-weeks or every-4-weeks schedule, and nothing else", () => {
+    for (const intervalDays of [7, 14, 28]) {
+      expect(validateSettings({ ...settings, intervalDays }).ok).toBe(true);
+    }
     expect(validateSettings({ ...settings, intervalDays: 10 })).toMatchObject({
       ok: false,
-      errors: { intervalDays: expect.any(String) },
+      errors: { intervalDays: "Must be 7, 14 or 28" },
     });
   });
 

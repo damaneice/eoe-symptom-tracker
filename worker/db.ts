@@ -1,11 +1,11 @@
-import type { IsoDate, Scope, Settings, SideEffect, Site } from "../src/domain/types";
+import type { IntervalDays, IsoDate, Scope, Settings, SideEffect, Site } from "../src/domain/types";
 import type { DoseInput, LogPatch, NoteInput } from "../src/domain/validate";
 import type { StoredDose, StoredLog, StoredNote, StoredScope } from "../src/domain/api";
 
 interface SettingsRow {
   patient_name: string;
   first_dose: string | null;
-  interval_days: 7 | 14;
+  interval_days: IntervalDays;
   dose_mg: number;
 }
 

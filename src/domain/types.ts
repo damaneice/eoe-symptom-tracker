@@ -56,10 +56,14 @@ export interface Scope {
   findings: string;
 }
 
+/** Days between doses: weekly, every 2 weeks or every 4 weeks. */
+export const INTERVALS = [7, 14, 28] as const;
+export type IntervalDays = (typeof INTERVALS)[number];
+
 export interface Settings {
   patientName: string;
   /** Optional: when unset, the earliest logged dose is the treatment start. */
   firstDose: IsoDate | null;
-  intervalDays: 7 | 14;
+  intervalDays: IntervalDays;
   doseMg: number;
 }

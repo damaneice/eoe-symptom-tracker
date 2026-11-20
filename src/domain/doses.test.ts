@@ -75,3 +75,15 @@ describe("doseSchedule: next injection site", () => {
     expect(doseSchedule([], "2026-11-19").nextSite).toBe("left-thigh");
   });
 });
+
+describe("doseSchedule: every 4 weeks", () => {
+  it("is due 28 days after the latest dose, and allows 2 days of slack before flagging a gap", () => {
+    const doses = [dose("2026-09-01", 28), dose("2026-09-30", 28), dose("2026-10-31", 28)];
+    // Sep 1 → Sep 30 is 29 days: fine. Sep 30 → Oct 31 is 31 days: a gap.
+    expect(doseSchedule(doses, "2026-11-20")).toMatchObject({
+      nextDue: "2026-11-28",
+      status: "ok",
+      gaps: [{ from: "2026-09-30", to: "2026-10-31", days: 31, expectedDays: 28 }],
+    });
+  });
+});

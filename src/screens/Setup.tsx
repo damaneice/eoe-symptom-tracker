@@ -1,4 +1,5 @@
 import { createSignal } from "solid-js";
+import type { IntervalDays } from "../domain/types";
 import { validateSettings } from "../domain/validate";
 import { Button, Field, Hint, Panel, Status, createSave } from "../components/ui";
 import { go } from "../lib/route";
@@ -9,7 +10,7 @@ export function Setup(props: { firstUse?: boolean }) {
   const s = state.settings;
   const [patientName, setPatientName] = createSignal(s?.patientName ?? "");
   const [firstDose, setFirstDose] = createSignal(s?.firstDose ?? "");
-  const [intervalDays, setIntervalDays] = createSignal<7 | 14>(s?.intervalDays ?? 14);
+  const [intervalDays, setIntervalDays] = createSignal<IntervalDays>(s?.intervalDays ?? 28);
   const [doseMg, setDoseMg] = createSignal(s?.doseMg ? String(s.doseMg) : "300");
   const save = createSave();
   const [localErrors, setLocalErrors] = createSignal<Record<string, string>>({});
@@ -53,10 +54,11 @@ export function Setup(props: { firstUse?: boolean }) {
             <Field label="Dosing schedule" error={errors().intervalDays}>
               <select
                 value={String(intervalDays())}
-                onChange={(e) => setIntervalDays(Number(e.currentTarget.value) as 7 | 14)}
+                onChange={(e) => setIntervalDays(Number(e.currentTarget.value) as IntervalDays)}
               >
                 <option value="7">Every week</option>
                 <option value="14">Every 2 weeks</option>
+                <option value="28">Every 4 weeks</option>
               </select>
             </Field>
             <Field label="Usual dose (mg)" error={errors().doseMg}>

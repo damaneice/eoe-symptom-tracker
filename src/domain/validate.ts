@@ -1,4 +1,12 @@
-import { SIDE_EFFECTS, SITES, type DailyLog, type Dose, type Scope, type Settings } from "./types";
+import {
+  INTERVALS,
+  SIDE_EFFECTS,
+  SITES,
+  type DailyLog,
+  type Dose,
+  type Scope,
+  type Settings,
+} from "./types";
 
 export type Result<T> = { ok: true; value: T } | { ok: false; errors: Record<string, string> };
 
@@ -152,7 +160,8 @@ export function validateScope(input: unknown): Result<Scope> {
 const settingsRules: Record<keyof Settings, Rule> = {
   patientName: nonBlankText(100),
   firstDose: nullable(isoDate),
-  intervalDays: (value) => (value === 7 || value === 14 ? undefined : "Must be 7 or 14"),
+  intervalDays: (value) =>
+    (INTERVALS as readonly unknown[]).includes(value) ? undefined : "Must be 7, 14 or 28",
   doseMg: intInRange(1, 2000),
 };
 

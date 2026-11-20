@@ -5,7 +5,7 @@ CREATE TABLE settings (
   id INTEGER PRIMARY KEY CHECK (id = 1),
   patient_name TEXT NOT NULL,
   first_dose TEXT,
-  interval_days INTEGER NOT NULL CHECK (interval_days IN (7, 14)),
+  interval_days INTEGER NOT NULL CHECK (interval_days IN (7, 14, 28)),
   dose_mg INTEGER NOT NULL
 );
 

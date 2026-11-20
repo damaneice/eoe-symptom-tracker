@@ -34,7 +34,7 @@ describe("PUT /api/settings", () => {
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({
       error: "Invalid",
-      fields: { intervalDays: "Must be 7 or 14" },
+      fields: { intervalDays: "Must be 7, 14 or 28" },
     });
   });
 
