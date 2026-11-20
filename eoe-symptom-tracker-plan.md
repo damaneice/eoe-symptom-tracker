@@ -67,7 +67,7 @@ events       id INTEGER PK, date TEXT, type TEXT ('diet'|'medication'|'illness'|
 ### Rules
 - **Daily logs merge by field.** The form starts with every symptom at 0, so a new day is always complete and "logged" just means a row exists. Saving sends only the fields that changed. The server inserts the row with defaults if it's missing, then updates only the fields it was sent. This way two caregivers logging different parts of the same day don't overwrite each other.
 - **Notes never overwrite.** Each caregiver adds their own `day_notes` row, and the day shows all of them with author and time.
-- **Each dose saves its own interval.** `interval_days` is copied from settings when a dose is logged. Gap flags use each dose's own interval, and "next due" uses the latest dose's interval. Switching from weekly to every 2 weeks doesn't distort the history.
+- **Each dose saves its own interval.** `interval_days` is copied from settings when a dose is logged. Each gap is judged by the longer of its two doses' intervals, and "next due" uses the latest dose's interval. Switching between weekly and every 2 weeks, in either direction, isn't flagged as a missed dose.
 - **Deletes are permanent** after a confirm dialog that names the record, for example "Delete dose on Nov 12 (300mg, left thigh)?". D1 Time Travel is the safety net.
 - **Validation** is small hand-written functions in `src/domain/`, used by both the forms and the Worker, and unit-tested. No validation library.
 
@@ -100,7 +100,7 @@ Solid gotchas to follow: don't destructure props, use `<For>` and `<Show>` inste
 ## Derived metrics (pure functions, unit tested)
 These live in `src/domain/`.
 - **Treatment start:** `settings.first_dose`, or the earliest dose if that is not set.
-- **Week number:** `floor(daysSince(start)/7) + 1`. Days before the start are week 0.
+- **Week number:** `floor(daysSince(start)/7) + 1`. Days before the start are week 0. With no treatment start at all, weeks count from the first logged day.
 - **Baseline:** the average score of the first calendar week with **at least 3 logged days**.
   - If any of those days fall before the first dose, label it **"since treatment started"**.
   - Otherwise, label it **"since tracking started"**. This is the expected case if logging begins after treatment has started.
@@ -109,7 +109,7 @@ These live in `src/domain/`.
 - **Last-7-days change:** percent change against the baseline. A drop of 10% or more is shown as good, a rise of 10% or more as bad.
 - **Best week:** the lowest weekly average among weeks with at least 3 days logged.
 - **"Halved from baseline":** the first week with at least 3 days logged and an average at or below half the baseline, with the baseline's label, for example "halved since tracking started, week 6". This is the headline answer to "how long until it improves".
-- **Next dose due:** last dose date plus that dose's `interval_days`. Flag it as overdue when that date has passed. Flag gaps longer than the earlier dose's interval plus 2 days.
+- **Next dose due:** last dose date plus that dose's `interval_days`. Show "due" on that date and "overdue" after it. Flag gaps longer than the interval plus 2 days, using the longer of the two doses' intervals.
 - **Injection site rotation:** left thigh → right thigh → left abdomen → right abdomen → left upper arm → right upper arm.
 - **Biopsy labels**, based on peak eos/hpf: 6 or fewer is the remission range, under 15 is responding, 15 or more is active.
 - **Events** appear only on the chart and the summary. They never change any number.
