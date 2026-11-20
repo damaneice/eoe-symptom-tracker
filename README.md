@@ -33,3 +33,19 @@ npm run build
 API, run in the Workers runtime against a fresh local D1 database for each test).
 
 Run `npm run cf-typegen` after changing `wrangler.jsonc` to regenerate `worker-configuration.d.ts`.
+
+## Deploy
+
+The first deploy is a one-time setup on your Cloudflare account. Run the wizard and follow it:
+
+```bash
+bash scripts/setup-cloudflare.sh
+```
+
+It signs Wrangler in, creates the D1 database, sets up Cloudflare Access (the sign-in gate)
+for the app's address, writes the non-secret values into `wrangler.jsonc`, applies the
+migrations, deploys, and adds the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets to
+GitHub. Commit the updated `wrangler.jsonc` and `worker-configuration.d.ts` afterwards.
+
+After that, every push to `main` deploys: CI applies any new migrations, then deploys the
+Worker. Caregivers are added or removed in the Access policy, not in the app.

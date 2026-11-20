@@ -143,7 +143,7 @@ These live in `src/domain/`.
 3. **D1 + API:** the first migration, the Worker routes including the field-merging `PATCH`, Access JWT verification, and API tests against a local D1.
 4. **Screens:** set up the Tailwind theme tokens and shared controls first, then the first-use Setup redirect, then port the prototype's views as Solid components with the responsive layout above. Add day notes.
 5. **Summary page:** the date range, print stylesheet and layout.
-6. **Deploy:**
+6. **Deploy:** `scripts/setup-cloudflare.sh` walks through all of it.
    - Create the D1 database and the Access application, with the email allowlist and a 1-month session.
    - Point a subdomain at the Worker.
    - Add the GitHub Actions deploy job: apply migrations, then `wrangler deploy` on push to `main`, with the Cloudflare API token in secrets.

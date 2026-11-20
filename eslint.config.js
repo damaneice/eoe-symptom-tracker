@@ -22,7 +22,7 @@ export default defineConfig([
     languageOptions: { globals: globals.browser },
   },
   {
-    files: ["*.{js,ts}"],
+    files: ["*.{js,ts}", "scripts/**/*.mjs"],
     languageOptions: { globals: globals.node },
   },
 ]);
