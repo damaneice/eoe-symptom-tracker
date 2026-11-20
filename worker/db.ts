@@ -1,20 +1,6 @@
-import type {
-  EventType,
-  IsoDate,
-  Scope,
-  Settings,
-  SideEffect,
-  Site,
-  TrackerEvent,
-} from "../src/domain/types";
+import type { IsoDate, Scope, Settings, SideEffect, Site } from "../src/domain/types";
 import type { DoseInput, LogPatch, NoteInput } from "../src/domain/validate";
-import type {
-  StoredDose,
-  StoredEvent,
-  StoredLog,
-  StoredNote,
-  StoredScope,
-} from "../src/domain/api";
+import type { StoredDose, StoredLog, StoredNote, StoredScope } from "../src/domain/api";
 
 interface SettingsRow {
   patient_name: string;
@@ -129,7 +115,7 @@ export async function deleteLog(db: D1Database, date: IsoDate): Promise<boolean>
 }
 
 /** Tables whose rows are deleted by id. Only these names ever reach the SQL. */
-export type IdTable = "day_notes" | "doses" | "scopes" | "events";
+export type IdTable = "day_notes" | "doses" | "scopes";
 
 /** Returns whether a row was deleted. */
 export async function deleteById(db: D1Database, table: IdTable, id: number): Promise<boolean> {
@@ -247,37 +233,4 @@ export async function addScope(db: D1Database, s: Scope): Promise<StoredScope> {
     .bind(s.date, s.peakEosHpf, s.proximalEosHpf, s.midEosHpf, s.distalEosHpf, s.findings)
     .first<ScopeRow>();
   return toScope(row!);
-}
-
-interface EventRow {
-  id: number;
-  date: string;
-  type: EventType;
-  text: string;
-  created_by: string;
-}
-
-const toEvent = (row: EventRow): StoredEvent => ({
-  id: row.id,
-  date: row.date,
-  type: row.type,
-  text: row.text,
-  createdBy: row.created_by,
-});
-
-export async function listEvents(db: D1Database): Promise<StoredEvent[]> {
-  const { results } = await db.prepare("SELECT * FROM events ORDER BY date, id").all<EventRow>();
-  return results.map(toEvent);
-}
-
-export async function addEvent(
-  db: D1Database,
-  event: TrackerEvent,
-  email: string,
-): Promise<StoredEvent> {
-  const row = await db
-    .prepare("INSERT INTO events (date, type, text, created_by) VALUES (?, ?, ?, ?) RETURNING *")
-    .bind(event.date, event.type, event.text, email)
-    .first<EventRow>();
-  return toEvent(row!);
 }

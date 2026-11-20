@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ApiState, StoredEvent, StoredScope } from "../src/domain/api";
+import type { ApiState, StoredScope } from "../src/domain/api";
 import { accessToken, api, CAREGIVER } from "./test/client";
 
 const settings = { patientName: "Ava", firstDose: "2026-11-05", intervalDays: 14, doseMg: 300 };
@@ -15,7 +15,6 @@ describe("GET /api/state", () => {
       notes: [],
       doses: [],
       scopes: [],
-      events: [],
     });
   });
 });
@@ -195,34 +194,6 @@ describe("scopes", () => {
   it("rejects a peak lower than a site count", async () => {
     const res = await api("POST", "/api/scopes", {
       body: { date: "2026-10-01", peakEosHpf: 10, distalEosHpf: 40 },
-    });
-    expect(res.status).toBe(400);
-  });
-});
-
-describe("events", () => {
-  it("saves a typed event with who logged it, and deletes it by id", async () => {
-    const res = await api("POST", "/api/events", {
-      body: { date: "2026-11-03", type: "diet", text: "Added dairy back" },
-    });
-    expect(res.status).toBe(201);
-    const event = (await res.json()) as StoredEvent;
-    expect(event).toEqual({
-      id: expect.any(Number),
-      date: "2026-11-03",
-      type: "diet",
-      text: "Added dairy back",
-      createdBy: CAREGIVER,
-    });
-    expect((await state()).events).toEqual([event]);
-
-    expect((await api("DELETE", `/api/events/${event.id}`)).status).toBe(204);
-    expect((await state()).events).toEqual([]);
-  });
-
-  it("rejects an unknown event type", async () => {
-    const res = await api("POST", "/api/events", {
-      body: { date: "2026-11-03", type: "travel", text: "Trip" },
     });
     expect(res.status).toBe(400);
   });

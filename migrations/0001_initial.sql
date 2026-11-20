@@ -52,11 +52,3 @@ CREATE TABLE scopes (
   distal_eos_hpf INTEGER,
   findings TEXT NOT NULL DEFAULT ''
 );
-
-CREATE TABLE events (
-  id INTEGER PRIMARY KEY,
-  date TEXT NOT NULL,
-  type TEXT NOT NULL,
-  text TEXT NOT NULL,
-  created_by TEXT NOT NULL
-);

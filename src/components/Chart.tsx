@@ -1,10 +1,9 @@
 import { createSignal, For, onCleanup, onMount, Show } from "solid-js";
-import type { StoredDose, StoredEvent, StoredLog, StoredScope } from "../domain/api";
+import type { StoredDose, StoredLog, StoredScope } from "../domain/api";
 import { daysBetween } from "../domain/dates";
 import type { Progress } from "../domain/progress";
 import { score } from "../domain/score";
 import type { IsoDate } from "../domain/types";
-import { EVENT_COLORS, EVENT_LABELS } from "../lib/labels";
 import { oneDecimal, shortDate } from "../lib/dates";
 
 export type Range = "12w" | "6m" | "all";
@@ -15,15 +14,14 @@ const HEIGHT = 260;
 const PAD = { left: 30, right: 12, top: 30, bottom: 34 };
 
 /**
- * Weekly average line, daily dots, the dashed baseline, dose ticks, event markers and biopsy
- * markers. Weeks run along the x axis; days before treatment sit in a shaded band before week 0.
+ * Weekly average line, daily dots, the dashed baseline, dose ticks and biopsy markers. Weeks
+ * run along the x axis; days before treatment sit in a shaded band before week 0.
  */
 export function Chart(props: {
   progress: Progress;
   logs: StoredLog[];
   doses: StoredDose[];
   scopes: StoredScope[];
-  events: StoredEvent[];
   today: IsoDate;
   range: Range;
 }) {
@@ -71,7 +69,9 @@ export function Chart(props: {
   const gridValues = () => Array.from({ length: maxY() / 2 + 1 }, (_, i) => i * 2);
   const weekTicks = () => {
     const span = end() - Math.max(0, startPos());
-    const step = span > 40 ? 8 : span > 20 ? 4 : 2;
+    // Roughly one label per 60px, so they never run into each other on a phone.
+    const fits = Math.max(2, Math.floor(width() / 60));
+    const step = [2, 4, 8, 13, 26].find((s) => span / s <= fits) ?? 52;
     const ticks: number[] = [];
     for (let w = Math.ceil(Math.max(0, startPos()) / step) * step; w <= end(); w += step) {
       ticks.push(w);
@@ -229,16 +229,6 @@ export function Chart(props: {
             </circle>
           )}
         </Show>
-
-        <For each={props.events.filter((e) => inView(e.date))}>
-          {(e) => (
-            <circle cx={xDate(e.date)} cy={PAD.top - 6} r="4" class={EVENT_COLORS[e.type].fill}>
-              <title>
-                {EVENT_LABELS[e.type]} {shortDate(e.date)}: {e.text}
-              </title>
-            </circle>
-          )}
-        </For>
 
         <For each={props.scopes.filter((s) => inView(s.date))}>
           {(s) => (

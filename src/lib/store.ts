@@ -1,16 +1,9 @@
 import { createMemo, createRoot, createSignal } from "solid-js";
 import { createStore } from "solid-js/store";
-import type {
-  ApiState,
-  StoredDose,
-  StoredEvent,
-  StoredLog,
-  StoredNote,
-  StoredScope,
-} from "../domain/api";
+import type { ApiState, StoredDose, StoredLog, StoredNote, StoredScope } from "../domain/api";
 import { doseSchedule } from "../domain/doses";
 import { progress } from "../domain/progress";
-import type { IsoDate, Scope, Settings, TrackerEvent } from "../domain/types";
+import type { IsoDate, Scope, Settings } from "../domain/types";
 import type { DoseInput, LogPatch, NoteInput } from "../domain/validate";
 import { api } from "./api";
 import { todayIso } from "./dates";
@@ -23,7 +16,6 @@ const empty: ApiState = {
   notes: [],
   doses: [],
   scopes: [],
-  events: [],
 };
 
 /** Everything from the API, loaded once. Screens read it; only the actions below change it. */
@@ -116,14 +108,4 @@ export async function addScope(scope: Partial<Scope>): Promise<void> {
 export async function deleteScope(id: number): Promise<void> {
   await api.delete(`/api/scopes/${id}`);
   setState("scopes", (scopes) => scopes.filter((s) => s.id !== id));
-}
-
-export async function addEvent(event: TrackerEvent): Promise<void> {
-  const saved = await api.post<StoredEvent>("/api/events", event);
-  setState("events", (events) => [...events, saved].sort(byDateThenId));
-}
-
-export async function deleteEvent(id: number): Promise<void> {
-  await api.delete(`/api/events/${id}`);
-  setState("events", (events) => events.filter((e) => e.id !== id));
 }

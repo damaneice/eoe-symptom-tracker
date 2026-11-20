@@ -1,6 +1,6 @@
 import { createSignal } from "solid-js";
 
-export const ROUTES = ["log", "progress", "doses", "endoscopy", "events", "setup", "more"] as const;
+export const ROUTES = ["log", "progress", "doses", "endoscopy", "setup", "more"] as const;
 export type Route = (typeof ROUTES)[number];
 
 const parse = (): Route => {

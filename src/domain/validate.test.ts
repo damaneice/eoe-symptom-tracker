@@ -1,11 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  validateDose,
-  validateEvent,
-  validateLogPatch,
-  validateScope,
-  validateSettings,
-} from "./validate";
+import { validateDose, validateLogPatch, validateScope, validateSettings } from "./validate";
 
 describe("validateLogPatch", () => {
   it("accepts a patch with only the fields that changed", () => {
@@ -110,20 +104,6 @@ describe("validateScope", () => {
     expect(validateScope({ date: "2026-10-01" })).toMatchObject({
       ok: false,
       errors: { peakEosHpf: "Required" },
-    });
-  });
-});
-
-describe("validateEvent", () => {
-  it("accepts a typed event with text", () => {
-    const event = { date: "2026-11-03", type: "diet", text: "Added dairy back" };
-    expect(validateEvent(event)).toEqual({ ok: true, value: event });
-  });
-
-  it("rejects an unknown type and blank text", () => {
-    expect(validateEvent({ date: "2026-11-03", type: "travel", text: "  " })).toMatchObject({
-      ok: false,
-      errors: { type: expect.any(String), text: expect.any(String) },
     });
   });
 });

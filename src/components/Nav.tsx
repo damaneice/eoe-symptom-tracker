@@ -6,7 +6,6 @@ const ALL: { to: Route; label: string }[] = [
   { to: "progress", label: "Progress" },
   { to: "doses", label: "Doses" },
   { to: "endoscopy", label: "Endoscopy" },
-  { to: "events", label: "Events" },
   { to: "setup", label: "Setup" },
 ];
 
@@ -14,7 +13,7 @@ const PHONE: { to: Route; label: string; also?: Route[] }[] = [
   { to: "log", label: "Log" },
   { to: "progress", label: "Progress" },
   { to: "doses", label: "Doses" },
-  { to: "more", label: "More", also: ["endoscopy", "events", "setup"] },
+  { to: "more", label: "More", also: ["endoscopy", "setup"] },
 ];
 
 /** Top tabs from 768px up. */

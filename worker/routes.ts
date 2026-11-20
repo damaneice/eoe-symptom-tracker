@@ -1,7 +1,6 @@
 import {
   isIsoDate,
   validateDose,
-  validateEvent,
   validateLogPatch,
   validateNote,
   validateScope,
@@ -10,14 +9,12 @@ import {
 } from "../src/domain/validate";
 import {
   addDose,
-  addEvent,
   addNote,
   addScope,
   deleteById,
   deleteLog,
   getSettings,
   listDoses,
-  listEvents,
   listLogs,
   listNotes,
   listScopes,
@@ -68,7 +65,6 @@ export const routes: Record<string, Handler> = {
       notes: await listNotes(db),
       doses: await listDoses(db),
       scopes: await listScopes(db),
-      events: await listEvents(db),
     } satisfies ApiState),
 
   "PUT /api/settings": async ({ db, body }) =>
@@ -107,11 +103,6 @@ export const routes: Record<string, Handler> = {
     valid(validateScope(body), async (scope) => json(await addScope(db, scope), 201)),
 
   "DELETE /api/scopes/:id": deleteFrom("scopes"),
-
-  "POST /api/events": async ({ db, email, body }) =>
-    valid(validateEvent(body), async (event) => json(await addEvent(db, event, email), 201)),
-
-  "DELETE /api/events/:id": deleteFrom("events"),
 };
 
 /** Finds the handler for a request, filling `params` from `:name` segments in the route. */

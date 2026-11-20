@@ -56,16 +56,6 @@ export interface Scope {
   findings: string;
 }
 
-export const EVENT_TYPES = ["diet", "medication", "illness", "other"] as const;
-export type EventType = (typeof EVENT_TYPES)[number];
-
-/** Something that might affect symptoms. Shown on the chart; never changes any number. */
-export interface TrackerEvent {
-  date: IsoDate;
-  type: EventType;
-  text: string;
-}
-
 export interface Settings {
   patientName: string;
   /** Optional: when unset, the earliest logged dose is the treatment start. */

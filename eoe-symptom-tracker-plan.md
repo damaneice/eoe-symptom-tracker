@@ -5,9 +5,8 @@ Build a small web app that a parent or caregiver can open on any phone or comput
 1. log Dupixent doses and see when the next one is due,
 2. log daily EoE symptoms in about 30 seconds,
 3. record endoscopy and biopsy results (eos/hpf),
-4. note events that might affect symptoms, such as diet or medication changes,
-5. see how long it takes symptoms to improve compared with the baseline,
-6. print a one-page summary for her GI doctor.
+4. see how long it takes symptoms to improve compared with the baseline,
+5. print a one-page summary for her GI doctor.
 
 The app is for one patient and one or two caregivers. It is a record to bring to appointments, not medical advice.
 
@@ -61,8 +60,6 @@ doses        id INTEGER PK, date TEXT, mg INTEGER, interval_days INTEGER,
 scopes       id INTEGER PK, date TEXT, peak_eos_hpf INTEGER,
              proximal_eos_hpf INTEGER NULL, mid_eos_hpf INTEGER NULL,
              distal_eos_hpf INTEGER NULL, findings TEXT
-events       id INTEGER PK, date TEXT, type TEXT ('diet'|'medication'|'illness'|'other'),
-             text TEXT, created_by TEXT
 ```
 
 ### Rules
@@ -75,14 +72,13 @@ events       id INTEGER PK, date TEXT, type TEXT ('diet'|'medication'|'illness'|
 ## API
 All routes return JSON and require a valid Access token.
 ```
-GET    /api/state              settings + all logs, notes, doses, scopes and events (small enough to load at once)
+GET    /api/state              settings + all logs, notes, doses and scopes (small enough to load at once)
 PUT    /api/settings
 PATCH  /api/logs/:date         merge only the sent fields; creates the day with defaults if missing
 DELETE /api/logs/:date
 POST   /api/notes              DELETE /api/notes/:id
 POST   /api/doses              DELETE /api/doses/:id
 POST   /api/scopes             DELETE /api/scopes/:id
-POST   /api/events             DELETE /api/events/:id
 ```
 The frontend loads `/api/state` once into a single Solid `createStore`. Every derived metric is a `createMemo` over the domain functions, so it recomputes only when the data it reads changes. **Saving waits for the server:** the button shows "Saving…", and the store updates only after the API confirms. If the call fails, an error is shown and the form keeps its values. There's no instant update or rollback. The screens are components switched by the URL hash, so there's no router library.
 
@@ -113,29 +109,27 @@ These live in `src/domain/`.
 - **Next dose due:** last dose date plus that dose's `interval_days`. Show "due" on that date and "overdue" after it. Flag gaps longer than the interval plus 2 days, using the longer of the two doses' intervals.
 - **Injection site rotation:** left thigh → right thigh → left abdomen → right abdomen → left upper arm → right upper arm.
 - **Biopsy labels**, based on peak eos/hpf: 6 or fewer is the remission range, under 15 is responding, 15 or more is active.
-- **Events** appear only on the chart and the summary. They never change any number.
 
 ## Screens
 1. **Header**, always visible: treatment week and day, next dose due (with "due today" and "overdue" shown prominently), and change against the baseline with its label.
 2. **Daily log** (the default view): a date picker that defaults to the phone's today and loads that day's entry if one exists, segmented 0–3 buttons, a vomiting stepper, three toggles, an overall rating from 0 to 10 and a live score. Below the form are the day's notes, each with author and time, and an "add note" box. Below that, a list of recent days with Edit buttons.
-3. **Progress:** a chart with daily dots, the weekly average line, a dashed baseline, dose ticks, event markers colored by type, and biopsy markers labeled with peak eos/hpf. A range toggle above it offers **12 weeks** (the default), **6 months** and **all**. "All" hides the daily dots and shows only the weekly line, the baseline and biopsy markers. Below the chart: stat tiles and a week-by-week table.
+3. **Progress:** a chart with daily dots, the weekly average line, a dashed baseline, dose ticks and biopsy markers labeled with peak eos/hpf. A range toggle above it offers **12 weeks** (the default), **6 months** and **all**. "All" hides the daily dots and shows only the weekly line, the baseline and biopsy markers. Below the chart: stat tiles and a week-by-week table.
 4. **Doses:** a form for date, mg (pre-filled from settings), site (pre-filled with the next site in the rotation) and side effect (none, injection-site reaction, eye redness, cold sore, joint pain, other), plus a note. Below it, the dose history with gap flags.
 5. **Endoscopy:** a form for date, peak eos/hpf, optional proximal, mid and distal eos/hpf, and findings, plus a results list.
-6. **Events:** a form for date, type (diet change, medication change, illness, other) and text, plus a list.
-7. **Setup:** patient name, first dose date (optional), schedule (weekly or every 2 weeks) and usual mg. Caregivers are managed in the Access policy, not in the app.
-8. **Summary** (for the doctor): a printable page with the chart, the week-by-week table, doses, biopsies and events for a date range. The range defaults to the most recent biopsy (or the start of tracking, if there's none) through today, with an "all time" shortcut. The baseline is always shown for comparison, even when it falls outside the range. The range lives in the URL hash, so it can be bookmarked. Use the browser's print to save it as a PDF, with a print stylesheet that hides navigation and fits the page.
+6. **Setup:** patient name, first dose date (optional), schedule (weekly or every 2 weeks) and usual mg. Caregivers are managed in the Access policy, not in the app.
+7. **Summary** (for the doctor): a printable page with the chart, the week-by-week table, doses, biopsies and day notes for a date range. The range defaults to the most recent biopsy (or the start of tracking, if there's none) through today, with an "all time" shortcut. The baseline is always shown for comparison, even when it falls outside the range. The range lives in the URL hash, so it can be bookmarked. Use the browser's print to save it as a PDF, with a print stylesheet that hides navigation and fits the page.
 
 **First use:** if there's no settings row, the app opens Setup first, with patient name, schedule and mg required. After saving, it goes to the daily log. There's no separate onboarding screen.
 
 ### Responsive layout
 - Mobile-first. It must work at 360–400px wide with no horizontal scrolling and tap targets of at least 44px.
-- On phones, navigation is a bottom tab bar for the four main screens (Log, Progress, Doses, More). More holds Endoscopy, Events, Summary and Setup. From 768px up (`md:`), navigation moves to a top bar showing every screen, content is centered with a max width of about 960px, and the Progress view puts the chart and stat tiles side by side.
+- On phones, navigation is a bottom tab bar for the four main screens (Log, Progress, Doses, More). More holds Endoscopy, Summary and Setup. From 768px up (`md:`), navigation moves to a top bar showing every screen, content is centered with a max width of about 960px, and the Progress view puts the chart and stat tiles side by side.
 - The week-by-week table scrolls horizontally inside its own container (`overflow-x-auto`) on narrow screens rather than widening the page.
 - Dark mode follows `prefers-color-scheme`.
 
 ### Styling with Tailwind
 - **Setup:** Tailwind v4 with the `@tailwindcss/vite` plugin. There's no `tailwind.config.js`. One `src/app.css` holds `@import "tailwindcss";` and a `@theme` block.
-- **Tokens:** semantic colors in `@theme`, such as `--color-bg`, `--color-surface`, `--color-text`, `--color-muted`, `--color-accent`, `--color-good` and `--color-bad`, plus one color per event type. A `@media (prefers-color-scheme: dark)` block redefines them, so components use `bg-surface text-text` and rarely need `dark:` classes. Add `color-scheme: light dark` so the native date picker and form controls match the theme.
+- **Tokens:** semantic colors in `@theme`, such as `--color-bg`, `--color-surface`, `--color-text`, `--color-muted`, `--color-accent`, `--color-good` and `--color-bad`. A `@media (prefers-color-scheme: dark)` block redefines them, so components use `bg-surface text-text` and rarely need `dark:` classes. Add `color-scheme: light dark` so the native date picker and form controls match the theme.
 - **Chart:** the SVG uses the same tokens through `fill-*` / `stroke-*` classes or `var(--color-…)`, so it follows dark mode too.
 - **Print:** `print:` variants hide navigation and switch the summary to light colors.
 - **Repeated controls:** the segmented 0–3 buttons, toggles, stepper, cards and tab bar become small Solid components, so the long class lists live in one place. Use `@apply` sparingly, only for base element styles in `app.css`.
@@ -146,7 +140,7 @@ These live in `src/domain/`.
 1. **Scaffold:** Vite + SolidJS + TS with `vite-plugin-solid`, `@tailwindcss/vite` and `@cloudflare/vite-plugin`, `wrangler.jsonc` with a D1 binding and `workers_dev: false`, ESLint, Prettier, Vitest, `.nvmrc`, and GitHub Actions running lint and tests.
 2. **Domain logic:** `src/domain/` with the score, week, baseline (with its label), weekly-stats, next-dose and gap, site-rotation, biopsy-label and validation functions, fully unit-tested. Write the tests first.
 3. **D1 + API:** the first migration, the Worker routes including the field-merging `PATCH`, Access JWT verification, and API tests against a local D1.
-4. **Screens:** set up the Tailwind theme tokens and shared controls first, then the first-use Setup redirect, then port the prototype's views as Solid components with the responsive layout above. Add the Events screen and day notes.
+4. **Screens:** set up the Tailwind theme tokens and shared controls first, then the first-use Setup redirect, then port the prototype's views as Solid components with the responsive layout above. Add day notes.
 5. **Summary page:** the date range, print stylesheet and layout.
 6. **Deploy:**
    - Create the D1 database and the Access application, with the email allowlist and a 1-month session.
@@ -154,6 +148,7 @@ These live in `src/domain/`.
    - Add the GitHub Actions deploy job: apply migrations, then `wrangler deploy` on push to `main`, with the Cloudflare API token in secrets.
 7. **PWA:** manifest and icons. Add an offline service worker only if it turns out to be needed.
 8. **After version 1:** a dose-day reminder email, sent by a daily Cron Trigger through Cloudflare Email Routing to the verified caregiver addresses. It needs a timezone setting.
+   - An events log (diet changes, medication changes, illness) shown as markers on the chart. It was dropped from version 1 to keep the app small; until then, these go in day notes.
 
 ## Privacy
 - This is health data about a child or a family member. Keep the repo private, put Access in front of every route, verify the Access token in the Worker as well, and add no analytics.

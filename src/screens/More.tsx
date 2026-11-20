@@ -4,7 +4,6 @@ import { go, type Route } from "../lib/route";
 
 const ITEMS: { to: Route; label: string; hint: string }[] = [
   { to: "endoscopy", label: "Endoscopy", hint: "Biopsy results (eos/hpf)" },
-  { to: "events", label: "Events", hint: "Diet, medication and illness changes" },
   { to: "setup", label: "Setup", hint: "Name, schedule and usual dose" },
 ];
 

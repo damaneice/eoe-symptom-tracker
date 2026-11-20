@@ -88,7 +88,6 @@ export function Progress() {
             logs={state.logs}
             doses={state.doses}
             scopes={state.scopes}
-            events={state.events}
             today={today()}
             range={range()}
           />
@@ -114,10 +113,6 @@ export function Progress() {
             <span>
               <i class="mr-1 inline-block size-2 rotate-45 bg-bad align-middle" />
               Biopsy (eos/hpf)
-            </span>
-            <span>
-              <i class="mr-1 inline-block size-2 rounded-full bg-event-diet align-middle" />
-              Event
             </span>
             <span>
               <i class="mr-1 inline-block h-2.5 w-3.5 bg-accent-soft align-middle" />

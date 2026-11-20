@@ -1,4 +1,4 @@
-import type { DailyLog, Dose, Scope, Settings, TrackerEvent } from "./types";
+import type { DailyLog, Dose, Scope, Settings } from "./types";
 
 /** Shapes the API sends and receives, shared by the Worker and the frontend. */
 
@@ -24,11 +24,6 @@ export interface StoredScope extends Scope {
   id: number;
 }
 
-export interface StoredEvent extends TrackerEvent {
-  id: number;
-  createdBy: string;
-}
-
 /** What `GET /api/state` returns: everything the app needs, loaded at once. */
 export interface ApiState {
   settings: Settings | null;
@@ -36,7 +31,6 @@ export interface ApiState {
   notes: StoredNote[];
   doses: StoredDose[];
   scopes: StoredScope[];
-  events: StoredEvent[];
 }
 
 /** The body of a 400 response. */

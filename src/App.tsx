@@ -7,7 +7,6 @@ import { load, loadError, loadStatus, reloadOnReturn, state } from "./lib/store"
 import { DailyLog } from "./screens/DailyLog";
 import { Doses } from "./screens/Doses";
 import { Endoscopy } from "./screens/Endoscopy";
-import { Events } from "./screens/Events";
 import { More } from "./screens/More";
 import { Progress } from "./screens/Progress";
 import { Setup } from "./screens/Setup";
@@ -58,9 +57,6 @@ export function App() {
           </Match>
           <Match when={route() === "endoscopy"}>
             <Endoscopy />
-          </Match>
-          <Match when={route() === "events"}>
-            <Events />
           </Match>
           <Match when={route() === "setup"}>
             <Setup />

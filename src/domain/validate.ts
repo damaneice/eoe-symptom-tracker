@@ -1,13 +1,4 @@
-import {
-  EVENT_TYPES,
-  SIDE_EFFECTS,
-  SITES,
-  type DailyLog,
-  type Dose,
-  type Scope,
-  type Settings,
-  type TrackerEvent,
-} from "./types";
+import { SIDE_EFFECTS, SITES, type DailyLog, type Dose, type Scope, type Settings } from "./types";
 
 export type Result<T> = { ok: true; value: T } | { ok: false; errors: Record<string, string> };
 
@@ -156,16 +147,6 @@ export function validateScope(input: unknown): Result<Scope> {
     };
   }
   return result;
-}
-
-const eventRules: Record<keyof TrackerEvent, Rule> = {
-  date: isoDate,
-  type: oneOf(EVENT_TYPES),
-  text: nonBlankText(2000),
-};
-
-export function validateEvent(input: unknown): Result<TrackerEvent> {
-  return check(input, eventRules, ["date", "type", "text"]);
 }
 
 const settingsRules: Record<keyof Settings, Rule> = {
