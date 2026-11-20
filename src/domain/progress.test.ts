@@ -10,19 +10,29 @@ const settings = (overrides: Partial<Settings> = {}): Settings => ({
   ...overrides,
 });
 
-/** A logged day whose score is `score` (0–12), made of swallow, chest, abdo and vomiting points. */
-const log = (date: string, score = 0, overrides: Partial<DailyLog> = {}): DailyLog => ({
-  date,
-  swallow: Math.min(score, 3),
-  chest: Math.min(Math.max(score - 3, 0), 3),
-  abdo: Math.min(Math.max(score - 6, 0), 3),
-  vomit: Math.min(Math.max(score - 9, 0), 3),
-  impaction: false,
-  eating: false,
-  sleep: false,
-  overall: null,
-  ...overrides,
-});
+/**
+ * A logged day whose score is `score` (0–11), filled in order: swallowing (up to 3), vomiting
+ * (up to 3), then impaction (3), eating trouble (1) and disrupted sleep (1).
+ */
+const log = (date: string, score = 0, overrides: Partial<DailyLog> = {}): DailyLog => {
+  const swallow = Math.min(score, 3);
+  const vomit = Math.min(score - swallow, 3);
+  let rest = score - swallow - vomit;
+  const impaction = rest >= 3;
+  if (impaction) rest -= 3;
+  const eating = rest >= 1;
+  if (eating) rest -= 1;
+  return {
+    date,
+    swallow,
+    vomit,
+    impaction,
+    eating,
+    sleep: rest >= 1,
+    overall: null,
+    ...overrides,
+  };
+};
 
 const dose = (date: string): Dose => ({
   date,
@@ -152,8 +162,8 @@ describe("progress: baseline", () => {
       state({
         settings: start,
         logs: [
-          log("2026-11-03", 12),
-          log("2026-11-04", 12),
+          log("2026-11-03", 11),
+          log("2026-11-04", 11),
           log("2026-11-12", 4),
           log("2026-11-13", 5),
           log("2026-11-14", 6),
@@ -255,5 +265,19 @@ describe("progress: best week and halved from baseline", () => {
     );
     expect(early.halvedWeek).toBeNull();
     expect(early.bestWeek).toBe(1);
+  });
+});
+
+describe("progress: last 7 days average", () => {
+  it("averages the scores logged in the 7 days ending today, even without a baseline", () => {
+    const result = progress(
+      state({ logs: [log("2026-11-12", 9), log("2026-11-13", 2), log("2026-11-19", 4)] }),
+      "2026-11-19",
+    );
+    expect(result.last7Average).toBe(3);
+  });
+
+  it("is empty with nothing logged in the last 7 days", () => {
+    expect(progress(state({ logs: [log("2026-11-01", 2)] }), "2026-11-19").last7Average).toBeNull();
   });
 });

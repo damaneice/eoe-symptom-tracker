@@ -1,11 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  validateDose,
-  validateEvent,
-  validateLogPatch,
-  validateScope,
-  validateSettings,
-} from "./validate";
+import { validateDose, validateLogPatch, validateScope, validateSettings } from "./validate";
 
 describe("validateLogPatch", () => {
   it("accepts a patch with only the fields that changed", () => {
@@ -20,10 +14,17 @@ describe("validateLogPatch", () => {
   });
 
   it("rejects ratings outside their range, naming the field", () => {
-    const result = validateLogPatch({ swallow: 7, overall: 11, vomit: -1, chest: 1.5 });
+    const result = validateLogPatch({ swallow: 1.5, overall: 11, vomit: -1 });
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(Object.keys(result.errors).sort()).toEqual(["chest", "overall", "swallow", "vomit"]);
+    expect(Object.keys(result.errors).sort()).toEqual(["overall", "swallow", "vomit"]);
+  });
+
+  it("rejects the removed chest and stomach pain fields", () => {
+    expect(validateLogPatch({ chest: 1, abdo: 2 })).toMatchObject({
+      ok: false,
+      errors: { chest: "Unknown field", abdo: "Unknown field" },
+    });
   });
 
   it("rejects wrong types for the trouble flags", () => {
@@ -114,20 +115,6 @@ describe("validateScope", () => {
   });
 });
 
-describe("validateEvent", () => {
-  it("accepts a typed event with text", () => {
-    const event = { date: "2026-11-03", type: "diet", text: "Added dairy back" };
-    expect(validateEvent(event)).toEqual({ ok: true, value: event });
-  });
-
-  it("rejects an unknown type and blank text", () => {
-    expect(validateEvent({ date: "2026-11-03", type: "travel", text: "  " })).toMatchObject({
-      ok: false,
-      errors: { type: expect.any(String), text: expect.any(String) },
-    });
-  });
-});
-
 describe("validateSettings", () => {
   const settings = { patientName: "Ava", firstDose: "2026-11-05", intervalDays: 14, doseMg: 300 };
 
@@ -140,10 +127,13 @@ describe("validateSettings", () => {
     });
   });
 
-  it("only allows a weekly or every-2-weeks schedule", () => {
+  it("allows a weekly, every-2-weeks or every-4-weeks schedule, and nothing else", () => {
+    for (const intervalDays of [7, 14, 28]) {
+      expect(validateSettings({ ...settings, intervalDays }).ok).toBe(true);
+    }
     expect(validateSettings({ ...settings, intervalDays: 10 })).toMatchObject({
       ok: false,
-      errors: { intervalDays: expect.any(String) },
+      errors: { intervalDays: "Must be 7, 14 or 28" },
     });
   });
 

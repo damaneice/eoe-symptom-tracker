@@ -67,6 +67,8 @@ export interface Progress {
   weeks: WeekStats[];
   /** The first week with enough logged days, or null until there is one. */
   baseline: Baseline | null;
+  /** Average score of the days logged in the 7 days ending today, or null if there are none. */
+  last7Average: number | null;
   /** The last 7 days (ending today) against the baseline. Null when it can't be worked out. */
   last7Change: Change | null;
   /** The full week (3+ logged days) with the lowest average, earliest on a tie. */
@@ -92,6 +94,7 @@ export function progress(state: TrackerState, today: IsoDate): Progress {
       start,
       weeks: [],
       baseline: null,
+      last7Average: null,
       last7Change: null,
       bestWeek: null,
       halvedWeek: null,
@@ -147,6 +150,7 @@ export function progress(state: TrackerState, today: IsoDate): Progress {
     start,
     weeks,
     baseline,
+    last7Average: recent,
     last7Change,
     bestWeek: best?.week ?? null,
     halvedWeek: halved?.week ?? null,

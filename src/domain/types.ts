@@ -5,11 +5,10 @@ export interface DailyLog {
   date: IsoDate;
   /** 0 none, 1 slow or careful eating, 2 needed a drink to get food down, 3 food got stuck. */
   swallow: number;
-  chest: number;
-  abdo: number;
   vomit: number;
   impaction: boolean;
   eating: boolean;
+  /** Coughing at night: woke up coughing, or coughed in her sleep. */
   sleep: boolean;
   /** Overall day rating 0–10. Not part of the score. */
   overall: number | null;
@@ -56,20 +55,14 @@ export interface Scope {
   findings: string;
 }
 
-export const EVENT_TYPES = ["diet", "medication", "illness", "other"] as const;
-export type EventType = (typeof EVENT_TYPES)[number];
-
-/** Something that might affect symptoms. Shown on the chart; never changes any number. */
-export interface TrackerEvent {
-  date: IsoDate;
-  type: EventType;
-  text: string;
-}
+/** Days between doses: weekly, every 2 weeks or every 4 weeks. */
+export const INTERVALS = [7, 14, 28] as const;
+export type IntervalDays = (typeof INTERVALS)[number];
 
 export interface Settings {
   patientName: string;
   /** Optional: when unset, the earliest logged dose is the treatment start. */
   firstDose: IsoDate | null;
-  intervalDays: 7 | 14;
+  intervalDays: IntervalDays;
   doseMg: number;
 }

@@ -1,12 +1,11 @@
 import {
-  EVENT_TYPES,
+  INTERVALS,
   SIDE_EFFECTS,
   SITES,
   type DailyLog,
   type Dose,
   type Scope,
   type Settings,
-  type TrackerEvent,
 } from "./types";
 
 export type Result<T> = { ok: true; value: T } | { ok: false; errors: Record<string, string> };
@@ -94,8 +93,6 @@ export type LogPatch = Partial<Omit<DailyLog, "date">>;
 
 const logRules: Record<keyof LogPatch, Rule> = {
   swallow: intInRange(0, 3),
-  chest: intInRange(0, 3),
-  abdo: intInRange(0, 3),
   vomit: intInRange(0, 99),
   impaction: boolean,
   eating: boolean,
@@ -158,20 +155,11 @@ export function validateScope(input: unknown): Result<Scope> {
   return result;
 }
 
-const eventRules: Record<keyof TrackerEvent, Rule> = {
-  date: isoDate,
-  type: oneOf(EVENT_TYPES),
-  text: nonBlankText(2000),
-};
-
-export function validateEvent(input: unknown): Result<TrackerEvent> {
-  return check(input, eventRules, ["date", "type", "text"]);
-}
-
 const settingsRules: Record<keyof Settings, Rule> = {
   patientName: nonBlankText(100),
   firstDose: nullable(isoDate),
-  intervalDays: (value) => (value === 7 || value === 14 ? undefined : "Must be 7 or 14"),
+  intervalDays: (value) =>
+    (INTERVALS as readonly unknown[]).includes(value) ? undefined : "Must be 7, 14 or 28",
   doseMg: intInRange(1, 2000),
 };
 
@@ -179,4 +167,18 @@ export function validateSettings(input: unknown): Result<Settings> {
   return check(input, settingsRules, ["patientName", "intervalDays", "doseMg"], {
     firstDose: null,
   });
+}
+
+export interface NoteInput {
+  date: string;
+  text: string;
+}
+
+const noteRules: Record<keyof NoteInput, Rule> = {
+  date: isoDate,
+  text: nonBlankText(2000),
+};
+
+export function validateNote(input: unknown): Result<NoteInput> {
+  return check(input, noteRules, ["date", "text"]);
 }

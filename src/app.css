@@ -1,26 +1,37 @@
 @import "tailwindcss";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/outfit";
 
+/* Colors from the prototype. Components use these names (bg-surface, text-muted, …), and the
+   dark-mode block below swaps the values, so `dark:` classes are rarely needed. */
 @theme {
-  --color-bg: #f7f7f5;
+  --font-sans: "Inter Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Outfit Variable", "Segoe UI", system-ui, sans-serif;
+
+  --color-bg: #f3f6f5;
   --color-surface: #ffffff;
-  --color-text: #1c1c1a;
-  --color-muted: #6b6b66;
-  --color-border: #e2e2dd;
-  --color-accent: #2f6fdb;
-  --color-good: #1f8a4c;
-  --color-bad: #c2410c;
+  --color-line: #d9e2e0;
+  --color-text: #17282c;
+  --color-muted: #5b6e71;
+  --color-accent: #2c6e73;
+  --color-accent-soft: #dcebea;
+  --color-dose: #b8731c;
+  --color-good: #2f7d52;
+  --color-bad: #b8433a;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-bg: #121211;
-    --color-surface: #1c1c1a;
-    --color-text: #ededea;
-    --color-muted: #a3a39d;
-    --color-border: #33332f;
-    --color-accent: #6b9ef0;
-    --color-good: #4ade80;
-    --color-bad: #fb923c;
+    --color-bg: #0f1a1c;
+    --color-surface: #172427;
+    --color-line: #2a3a3d;
+    --color-text: #e4eeec;
+    --color-muted: #93a6a8;
+    --color-accent: #6fb8bc;
+    --color-accent-soft: #1e3739;
+    --color-dose: #e0a050;
+    --color-good: #5dba86;
+    --color-bad: #e2786e;
   }
 }
 
@@ -30,6 +41,23 @@
   }
 
   body {
-    @apply bg-bg text-text antialiased;
+    @apply bg-bg font-sans text-[15px] leading-normal text-text antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display font-semibold text-balance;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-accent;
+  }
+
+  input,
+  select,
+  textarea {
+    /* 16px stops iOS from zooming in when a field is focused. */
+    @apply w-full rounded-lg border border-line bg-bg px-2.5 py-2 text-base text-text;
   }
 }
